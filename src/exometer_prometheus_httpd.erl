@@ -26,7 +26,7 @@ do(Req) ->
     {ok, RequiredPath} = application:get_env(exometer_prometheus, path),
     case {Method, URI} of
         {"GET", RequiredPath} ->
-            Payload = exometer_report_prometheus:fetch(),
+            Payload = safe_fetch(),
             ContentLength = integer_to_list(iolist_size(Payload)),
             RespHeaders = [{code, 200}, {content_length, ContentLength},
                            {content_type, "text/plain; version=0.0.4"}],
@@ -38,3 +38,11 @@ do(Req) ->
             {break, [{response, {response, RespHeaders, [Payload]}}]}
     end.
 
+safe_fetch() ->
+    try exometer_report_prometheus:fetch() of
+        Payload ->
+            Payload
+    catch _Class:Error ->
+        error_logger:error_msg("issue=fetch_error error=~p", [Error]),
+        []
+    end.
