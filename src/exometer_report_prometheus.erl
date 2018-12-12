@@ -71,8 +71,13 @@ exometer_terminate(_Reason, _) -> ignore.
 %% -------------------------------------------------------
 
 fetch_and_format_metrics(Entries) ->
-    Metrics = fetch_metrics(Entries),
-    exometer_prometheus_fmt:metrics(Metrics).
+    try
+        Metrics = fetch_metrics(Entries),
+        exometer_prometheus_fmt:metrics(Metrics)
+    catch _:Error ->
+        error_logger:error_msg("issue=fetch_and_format_metrics_error msg=~p", [Error]),
+        <<"">>
+    end.
 
 fetch_metrics(Entries) ->
     fetch_metrics(Entries, []).
